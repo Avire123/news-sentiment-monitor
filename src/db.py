@@ -28,15 +28,36 @@ def init_db():
 def save_articles(df: pd.DataFrame):
     if df.empty:
         return 0
-
+    
     conn = get_db_connection()
-    # Insert non-duplicate records based on article_id
+    
+    expected_cols = [
+        "article_id", "title", "url", "published_at",
+        "source", "snippet", "sentiment_score", "sentiment_label"
+    ]
+    
+    df_clean = df[expected_cols].copy()
+    
+    conn.register("df_view", df_clean)
+    
+    # Get initial count
+    count_before = conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0]
+    
     conn.execute("""
-        INSERT INTO articles
-        SELECT * FROM df
+        INSERT INTO articles (
+            article_id, title, url, published_at, source, snippet, sentiment_score, sentiment_label
+        )
+        SELECT 
+            article_id, title, url, published_at, source, snippet, sentiment_score, sentiment_label
+        FROM df_view
         ON CONFLICT (article_id) DO NOTHING;
     """)
-    inserted_rows = conn.changes()
+    
+    # Calculate inserted rows
+    count_after = conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0]
+    inserted_rows = count_after - count_before
+    
+    conn.unregister("df_view")
     conn.close()
     return inserted_rows
 
@@ -46,7 +67,6 @@ def load_articles():
     conn.close()
     return df
 
-if __name__ =="__main__":
+if __name__ == "__main__":
     init_db()
-    print("Database Initialized Successfully.")
-
+    print("Database initialized successfully.")

@@ -7,3 +7,4 @@ requests
 nltk
 plotly
 schedule
+scikit-learn
