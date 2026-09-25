@@ -1,0 +1,9 @@
+streamlit
+pandas
+duckdb
+feedparser
+beautifulsoup4
+requests
+nltk
+plotly
+schedule
